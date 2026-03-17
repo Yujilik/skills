@@ -9,6 +9,35 @@ import {
 } from "../graphql";
 import type { OutputOpts } from "../types";
 
+// ── Resolve session by ID or name ──
+
+async function resolveSession(client: any, idOrName: string) {
+  // Try direct ID lookup first (may throw on non-numeric strings)
+  try {
+    const byId = await client.replay.sessions.get(idOrName);
+    if (byId) return byId;
+  } catch {
+    // ID lookup failed (e.g., non-numeric string) — fall through to name search
+  }
+
+  // Fall back to searching by name (paginate in chunks of 100)
+  let after: string | undefined;
+  while (true) {
+    const page = after
+      ? await client.replay.sessions.list().after(after, 100)
+      : await client.replay.sessions.list().first(100);
+
+    for (const edge of page.edges) {
+      if (edge.node.name === idOrName) return edge.node;
+    }
+
+    if (!page.pageInfo.hasNextPage) break;
+    after = page.pageInfo.endCursor;
+  }
+
+  return undefined;
+}
+
 // ── Replay ──
 
 export async function cmdReplay(requestId: string, rawOverride: string | undefined, opts: OutputOpts) {
@@ -231,10 +260,10 @@ export async function cmdEdit(
 
 export async function cmdGetSession(sessionId: string, opts: OutputOpts) {
   const client = await getClient();
-  const session = await client.replay.sessions.get(sessionId);
+  const session = await resolveSession(client, sessionId);
 
   if (!session) {
-    console.error(`Replay session ${sessionId} not found`);
+    console.error(`Replay session "${sessionId}" not found (tried ID and name lookup)`);
     process.exit(1);
   }
 
@@ -296,10 +325,10 @@ export async function cmdGetSession(sessionId: string, opts: OutputOpts) {
 
 export async function cmdReplayEntries(sessionId: string, limit: number, opts: OutputOpts) {
   const client = await getClient();
-  const session = await client.replay.sessions.get(sessionId);
+  const session = await resolveSession(client, sessionId);
 
   if (!session) {
-    console.error(`Replay session ${sessionId} not found`);
+    console.error(`Replay session "${sessionId}" not found (tried ID and name lookup)`);
     process.exit(1);
   }
 
@@ -337,7 +366,7 @@ export async function cmdReplayEntries(sessionId: string, limit: number, opts: O
 // ── Edit from Session (use active entry as source) ──
 
 export async function cmdEditSession(
-  sessionId: string,
+  sessionIdOrName: string,
   edits: {
     method?: string;
     path?: string;
@@ -349,12 +378,14 @@ export async function cmdEditSession(
   opts: OutputOpts,
 ) {
   const client = await getClient();
-  const session = await client.replay.sessions.get(sessionId);
+  const session = await resolveSession(client, sessionIdOrName);
 
   if (!session) {
-    console.error(`Replay session ${sessionId} not found`);
+    console.error(`Replay session "${sessionIdOrName}" not found (tried ID and name lookup)`);
     process.exit(1);
   }
+
+  const sessionId = session.id;
 
   if (!session.activeEntryId) {
     console.error(`Session ${sessionId} has no active entry`);

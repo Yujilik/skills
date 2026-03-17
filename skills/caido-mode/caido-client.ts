@@ -60,13 +60,13 @@ Usage:
   export-curl <request-id>     Export request as curl command
 
 ═══════════════════════════════════════════════
- SESSION LOOKUP (tab number = session ID)
+ SESSION LOOKUP (by tab number OR name)
 ═══════════════════════════════════════════════
 
-  get-session <session-id>     Get replay tab by ID (shows active request)
-  replay-entries <session-id>  List request history within a replay tab
+  get-session <id-or-name>     Get replay tab by ID or name (shows active request)
+  replay-entries <id-or-name>  List request history within a replay tab
     --limit <n>                Max results (default: 20)
-  edit-session <session-id>    Edit & send from a replay tab's active request
+  edit-session <id-or-name>    Edit & send from a replay tab's active request
     --method <METHOD>          Change HTTP method
     --path <path>              Change request path
     --set-header <N:V>         Set header (repeatable)
@@ -320,7 +320,7 @@ async function main() {
 
     // ── Session Lookup ──
     case "get-session": {
-      if (!args[1]) { console.error("Error: session-id required (matches tab number in Caido UI)"); process.exit(1); }
+      if (!args[1]) { console.error("Error: session id or name required"); process.exit(1); }
       await cmdGetSession(args[1], parseOutputOpts(args, 2));
       break;
     }
@@ -336,7 +336,7 @@ async function main() {
     }
 
     case "edit-session": {
-      if (!args[1]) { console.error("Error: session-id required (matches tab number in Caido UI)"); process.exit(1); }
+      if (!args[1]) { console.error("Error: session id or name required"); process.exit(1); }
       let esMethod: string | undefined, esPath: string | undefined, esBody: string | undefined;
       const esSetHeaders: string[] = [], esRemoveHeaders: string[] = [], esReplacements: string[] = [];
       for (let i = 2; i < args.length; i++) {

@@ -157,22 +157,21 @@ node caido-client.ts select-env <env-id>
 node caido-client.ts delete-env <id>
 ```
 
-### Session Lookup (tab number = session ID)
+### Session Lookup (by tab number or name)
 
-Caido's replay tab number maps directly to the session ID. No pagination needed.
+Caido's replay tab number maps directly to the session ID. Renamed tabs can also be looked up by name.
 
 ```bash
-# Instantly see what's in replay tab 412
+# Look up by tab number (instant) or by name (scans sessions)
 node caido-client.ts get-session 412
-node caido-client.ts get-session 412 --compact
+node caido-client.ts get-session "testing_idor" --compact
 
 # List request history within a replay tab
 node caido-client.ts replay-entries 412 --limit 10
 
 # Edit and send from the tab's active request directly
 node caido-client.ts edit-session 412 --body '{"test": true}' --compact
-node caido-client.ts edit-session 412 --path /api/other --compact
-node caido-client.ts edit-session 412 --replace "old_value:::new_value" --compact
+node caido-client.ts edit-session "testing_idor" --path /api/other --compact
 ```
 
 ### Sessions & Collections
