@@ -239,7 +239,7 @@ This repo is designed to work as a [Claude Code skill](https://docs.anthropic.co
 To install as a skill:
 
 ```bash
-cp -r . ~/.claude/skills/caido-mode/
+rsync -a --exclude='.git' --exclude='.github' --exclude='node_modules' ./ ~/.claude/skills/caido-mode/
 cd ~/.claude/skills/caido-mode && npm install
 ```
 
